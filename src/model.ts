@@ -4,6 +4,7 @@ export const HARNESSES = [
   "Gemini CLI",
   "OpenCode",
   "Cursor",
+  "Pi",
 ] as const;
 export type Harness = (typeof HARNESSES)[number];
 export interface Source {

@@ -28,8 +28,42 @@ const binaries = {
   "Gemini CLI": "gemini",
   OpenCode: "opencode",
   Cursor: "agent",
+  Pi: "pi",
 };
 export function parseStatus(server: Server, output: string): ActionResult {
+  if (server.harness === "Pi") {
+    try {
+      const parsed: unknown = JSON.parse(output);
+      const servers =
+        parsed && typeof parsed === "object"
+          ? (parsed as { servers?: unknown }).servers
+          : null;
+      const rows = Array.isArray(servers) ? servers : [];
+      const matches = rows.filter((row) => row?.name === server.name);
+      // A project entry replaces a user-level entry, so Pi reports one row per
+      // name; prefer the row from this server's own configuration file.
+      const row =
+        matches.find((row) => row?.source === server.source) ??
+        matches[0] ??
+        null;
+      if (!row) return result("unknown", "Not reported by Pi");
+      switch (row.state) {
+        case "connected":
+          return result("connected", "Connected");
+        case "needs-auth":
+          return result("auth-required", "Sign-in required");
+        case "disconnected":
+        case "closed":
+          return result("failed", "Not connected");
+        case "disabled":
+          return result("unknown", "Disabled in Pi");
+        default:
+          return result("unknown", "Connection not verified by Pi");
+      }
+    } catch {
+      return result("unknown", "Could not read harness status");
+    }
+  }
   if (server.harness === "Codex") {
     try {
       const rows: unknown = JSON.parse(output);
@@ -62,7 +96,8 @@ export function parseStatus(server: Server, output: string): ActionResult {
   return result("unknown", "Status unavailable · check in the harness");
 }
 export function parseListStatus(server: Server, output: string): ActionResult {
-  if (server.harness === "Codex") return parseStatus(server, output);
+  if (server.harness === "Codex" || server.harness === "Pi")
+    return parseStatus(server, output);
   const clean = output.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "");
   const line = clean
     .split("\n")
@@ -87,7 +122,11 @@ export async function checkServers(
     )
   )
     throw new Error("Mixed harness contexts");
-  if (first.harness !== "Claude Code" && first.harness !== "Codex")
+  if (
+    first.harness !== "Claude Code" &&
+    first.harness !== "Codex" &&
+    first.harness !== "Pi"
+  )
     return Object.fromEntries(
       servers.map((server) => [
         server.id,
@@ -95,7 +134,9 @@ export async function checkServers(
       ]),
     );
   const args =
-    first.harness === "Codex" ? ["mcp", "list", "--json"] : ["mcp", "list"];
+    first.harness === "Claude Code"
+      ? ["mcp", "list"]
+      : ["mcp", "list", "--json"];
   return new Promise((resolve) =>
     execFile(
       binaries[first.harness],
@@ -112,7 +153,9 @@ export async function checkServers(
           Object.fromEntries(
             servers.map((server) => [
               server.id,
-              error
+              // Pi exits non-zero when an enabled server is not connected but
+              // still reports every server on stdout.
+              error && !(first.harness === "Pi" && stdout.trim())
                 ? result(
                     "unknown",
                     "Status check failed. Check that the harness CLI is available.",
@@ -164,7 +207,9 @@ export class AuthJobs {
     const args =
       server.harness === "OpenCode"
         ? ["mcp", "auth", "--", server.name]
-        : ["mcp", "login", "--", server.name];
+        : server.harness === "Pi"
+          ? ["mcp", "login", server.name]
+          : ["mcp", "login", "--", server.name];
     const command = [binaries[server.harness], ...args]
       .map((value) => `'${value.replaceAll("'", "'\\''")}'`)
       .join(" ");

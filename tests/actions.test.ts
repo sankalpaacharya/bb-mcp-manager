@@ -41,6 +41,51 @@ test("only scoped native status proves a connection", () => {
     "unknown",
   );
 });
+test("parses Pi's JSON status output", () => {
+  const pi: Server = {
+    ...server,
+    harness: "Pi",
+    source: "/home/u/.pi/agent/mcp.json",
+  };
+  const output = JSON.stringify({
+    servers: [
+      {
+        name: "docs",
+        source: "/home/u/.pi/agent/mcp.json",
+        state: "connected",
+      },
+      { name: "other", state: "needs-auth" },
+    ],
+  });
+  assert.equal(parseStatus(pi, output).state, "connected");
+  // A project entry replaces a user-level entry, so both rows read its state.
+  assert.equal(
+    parseStatus({ ...pi, source: "/p/.pi/mcp.json" }, output).state,
+    "connected",
+  );
+  assert.equal(
+    parseStatus(
+      pi,
+      JSON.stringify({ servers: [{ name: "docs", state: "needs-auth" }] }),
+    ).state,
+    "auth-required",
+  );
+  for (const state of ["disconnected", "closed"])
+    assert.equal(
+      parseStatus(pi, JSON.stringify({ servers: [{ name: "docs", state }] }))
+        .state,
+      "failed",
+    );
+  assert.equal(
+    parseStatus(
+      pi,
+      JSON.stringify({ servers: [{ name: "docs", state: "disabled" }] }),
+    ).state,
+    "unknown",
+  );
+  assert.equal(parseStatus(pi, "{}").state, "unknown");
+  assert.equal(parseStatus(pi, "not json").state, "unknown");
+});
 test("only authorization links without credentials are returned", () => {
   const url =
     "https://example.com/authorize?client_id=sample&response_type=code";
@@ -61,6 +106,10 @@ test("unsupported flows give guidance without starting a process", () => {
       "/mcp auth docs",
     );
     assert.equal(jobs.start({ ...server, transport: "stdio" }).state, "manual");
+    assert.equal(
+      jobs.start({ ...server, harness: "Pi", transport: "stdio" }).command,
+      "'pi' 'mcp' 'login' 'docs'",
+    );
     assert.equal(jobs.poll("missing").state, "failed");
   } finally {
     jobs.dispose();

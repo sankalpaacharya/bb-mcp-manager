@@ -8,14 +8,14 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/BB-0.43%2B-4f8cff" alt="Requires BB 0.43 or later" />
-  <img src="https://img.shields.io/badge/harnesses-5-lightgrey" alt="Five supported harnesses" />
+  <img src="https://img.shields.io/badge/harnesses-6-lightgrey" alt="Six supported harnesses" />
 </p>
 
 <p align="center">
   <img src="assets/showcase.png" width="1000" alt="MCP Manager showing harness filters, search, tags, and connection status" />
 </p>
 
-Claude Code, Codex, Gemini CLI, OpenCode, and Cursor each keep their own MCP configuration. MCP Manager brings those connections into one list so you can find them, organize them, and reconnect when needed.
+Claude Code, Codex, Gemini CLI, OpenCode, Cursor, and Pi each keep their own MCP configuration. MCP Manager brings those connections into one list so you can find them, organize them, and reconnect when needed.
 
 ## Install
 
@@ -27,7 +27,7 @@ Then open **MCP inventory** in the sidebar. Requires BB 0.43+ and an enrolled ho
 
 ## What you get
 
-- See configured MCPs across five harnesses
+- See configured MCPs across six harnesses
 - Filter by harness, or search by name and tag
 - Expand a row to edit tags with the pencil icon
 - Group connections by tag
@@ -36,7 +36,7 @@ Then open **MCP inventory** in the sidebar. Requires BB 0.43+ and an enrolled ho
 
 Same-name connections share a row within each harness. Pick a configuration before reconnecting or deleting when there’s more than one.
 
-Checks run at startup and on **Refresh**. Claude Code reports connection status; Codex reports saved credentials. Other harnesses need native status checks. [Configuration and status details](docs/configuration.md).
+Checks run at startup and on **Refresh**. Claude Code and Pi report connection status; Codex reports saved credentials. Other harnesses need native status checks. [Configuration and status details](docs/configuration.md).
 
 ## CLI
 

@@ -7,6 +7,7 @@ const harness = z.enum([
   "Gemini CLI",
   "OpenCode",
   "Cursor",
+  "Pi",
 ]);
 const scope = z.enum(["user", "project"]);
 export const inventorySchema = z.object({

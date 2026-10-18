@@ -23,7 +23,7 @@ async function fixture(
   }
 }
 
-test("reads five harness formats and excludes launch details and credentials", async () =>
+test("reads six harness formats and excludes launch details and credentials", async () =>
   fixture(async (home, put) => {
     await put(
       ".claude.json",
@@ -64,11 +64,27 @@ test("reads five harness formats and excludes launch details and credentials", a
       ".config/opencode/opencode.jsonc",
       '{// comment\n"mcp":{"open":{"type":"local","command":["node","SECRET_SCRIPT"],},},}',
     );
+    await put(
+      ".pi/agent/mcp.json",
+      JSON.stringify({
+        mcpServers: {
+          remote: {
+            url: "https://SECRET_PI",
+            headers: { Authorization: "SECRET_PI_AUTH" },
+          },
+          off: { command: "node", enabled: false },
+        },
+      }),
+    );
     const result = await scanInventory({ home, env: {} });
-    assert.equal(result.servers.length, 6);
-    assert.equal(new Set(result.servers.map((s) => s.harness)).size, 5);
+    assert.equal(result.servers.length, 8);
+    assert.equal(new Set(result.servers.map((s) => s.harness)).size, 6);
     assert.equal(
       result.servers.find((s) => s.harness === "Codex")?.state,
+      "disabled",
+    );
+    assert.equal(
+      result.servers.find((s) => s.harness === "Pi" && s.name === "off")?.state,
       "disabled",
     );
     assert.equal(
@@ -93,6 +109,34 @@ test("reports malformed files without leaking parser snippets and keeps other so
     );
     assert.equal(result.sources.filter((s) => s.status === "error").length, 1);
     assert.doesNotMatch(JSON.stringify(result), /SECRET_BAD/);
+  }));
+
+test("treats Pi override entries as valid and marks rejected SSE as invalid", async () =>
+  fixture(async (home, put) => {
+    await put(
+      ".pi/agent/mcp.json",
+      '{"mcpServers":{"docs":{"url":"https://example.com/mcp"}}}',
+    );
+    await put(
+      "project/.pi/mcp.json",
+      '{"mcpServers":{"docs":{"enabled":true,"exposure":"direct"},"legacy":{"type":"sse","url":"https://example.com/sse"}}}',
+    );
+    const result = await scanInventory({
+      home,
+      env: {},
+      projects: [join(home, "project")],
+    });
+    const override = result.servers.find(
+      (s) => s.harness === "Pi" && s.name === "docs" && s.scope === "project",
+    );
+    assert.equal(override?.state, "configured");
+    assert.equal(override?.transport, "unknown");
+    assert.equal(
+      result.servers.find((s) => s.harness === "Pi" && s.name === "legacy")
+        ?.state,
+      "invalid",
+    );
+    assert.doesNotMatch(JSON.stringify(result), /SECRET/);
   }));
 
 test("preserves same-name project and user entries without inventing effective precedence", async () =>

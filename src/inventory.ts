@@ -41,6 +41,7 @@ export function configSources(
   add("Codex", join(env.CODEX_HOME || join(home, ".codex"), "config.toml"));
   add("Gemini CLI", join(home, ".gemini/settings.json"));
   add("Cursor", join(home, ".cursor/mcp.json"));
+  add("Pi", join(home, ".pi/agent/mcp.json"));
   const config = join(env.XDG_CONFIG_HOME || join(home, ".config"), "opencode");
   add("OpenCode", join(config, "opencode.json"));
   add("OpenCode", join(config, "opencode.jsonc"));
@@ -51,6 +52,7 @@ export function configSources(
     add("Codex", join(project, ".codex/config.toml"), project);
     add("Gemini CLI", join(project, ".gemini/settings.json"), project);
     add("Cursor", join(project, ".cursor/mcp.json"), project);
+    add("Pi", join(project, ".pi/mcp.json"), project);
     add("OpenCode", join(project, "opencode.json"), project);
     add("OpenCode", join(project, "opencode.jsonc"), project);
   }
@@ -100,7 +102,17 @@ export function extractServers(value: unknown, source: Source): Server[] {
       const state =
         entry?.enabled === false || entry?.disabled === true
           ? "disabled"
-          : transport === "unknown"
+          : // Pi rejects SSE and accepts bare override entries that only set
+            // enabled, exposure, or toolExposure for a user-level server.
+            (source.harness === "Pi" && entry?.type === "sse") ||
+              (transport === "unknown" &&
+                !(
+                  source.harness === "Pi" &&
+                  entry &&
+                  ("enabled" in entry ||
+                    "exposure" in entry ||
+                    "toolExposure" in entry)
+                ))
             ? "invalid"
             : "configured";
       result.push({

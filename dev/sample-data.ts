@@ -8,6 +8,7 @@ const entries: Array<
   ["github", "Codex", "stdio", "configured"],
   ["github", "Cursor", "http", "configured"],
   ["linear", "Claude Code", "http", "configured"],
+  ["linear", "Pi", "http", "configured"],
   ["playwright", "Codex", "stdio", "configured"],
   ["playwright", "Cursor", "stdio", "configured"],
   ["filesystem", "Gemini CLI", "stdio", "disabled"],
@@ -21,6 +22,7 @@ const paths: Record<Server["harness"], string> = {
   Cursor: "/home/demo/.cursor/mcp.json",
   "Gemini CLI": "/home/demo/.gemini/settings.json",
   OpenCode: "/home/demo/.config/opencode/opencode.json",
+  Pi: "/home/demo/.pi/agent/mcp.json",
 };
 export const sampleInventory: Inventory = {
   scannedAt: "2026-09-23T09:41:00Z",
