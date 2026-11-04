@@ -74,8 +74,7 @@
   color: var(--muted-foreground);
 }
 .mcp-simple select,
-.mcp-search,
-.mcp-tag-popover input {
+.mcp-search {
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: 5px;
@@ -134,7 +133,7 @@
 }
 
 /* One toolbar; filters never become another dashboard. */
-.mcp-tag-toolbar {
+.mcp-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -160,25 +159,6 @@
   height: 32px;
   padding-left: 31px;
 }
-.mcp-tag-toolbar > select {
-  height: 32px;
-  max-width: 200px;
-}
-.mcp-group-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--muted-foreground);
-  margin-left: auto;
-  cursor: pointer;
-  min-height: 32px;
-}
-.mcp-group-toggle input {
-  margin: 0;
-  accent-color: var(--foreground);
-  width: 13px;
-  height: 13px;
-}
 
 /* A single shared column definition keeps headings and every row aligned. */
 .mcp-list {
@@ -199,25 +179,16 @@
   padding: 0 8px 9px;
   border-bottom: 1px solid var(--border);
 }
-.mcp-list-heading > span:first-child {
-  padding-left: 22px;
-}
 .mcp-row {
   padding: 9px 8px;
   min-height: 44px;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  cursor: pointer;
 }
 .mcp-row:hover {
   background: var(--mcp-hover);
 }
-.mcp-row[hidden],
-.mcp-row-details[hidden] {
+.mcp-row[hidden] {
   display: none;
-}
-.mcp-row[data-expanded="true"] {
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--muted) 30%, transparent);
 }
 .mcp-identity,
 .mcp-name {
@@ -229,26 +200,11 @@
 .mcp-name {
   flex-wrap: wrap;
 }
-.mcp-simple .mcp-row-toggle {
-  justify-content: flex-start;
-  min-width: 0;
-  max-width: 100%;
-  gap: 10px;
-  border: 0;
-  padding: 0;
-  border-radius: 2px;
-  background: transparent;
-  text-align: left;
-}
-.mcp-row-toggle strong {
+.mcp-name strong {
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.mcp-chevron {
-  flex-shrink: 0;
-  color: var(--muted-foreground);
 }
 .mcp-server-icon {
   display: inline-flex;
@@ -326,92 +282,13 @@
   color: var(--destructive, var(--foreground));
 }
 
-/* Disclosure is a continuation of the row, not a nested card. */
-.mcp-row-details {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: baseline;
-  gap: 20px;
-  padding: 13px 0 4px 22px;
-  cursor: default;
-}
-.mcp-detail-label {
-  color: var(--muted-foreground);
-  font-size: 11px;
-}
-.mcp-detail-tags {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-.mcp-detail-tag {
-  font-size: 11px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: var(--muted);
-}
-.mcp-simple .mcp-tag-button {
-  font-size: 11px;
-  color: var(--muted-foreground);
-  border-color: transparent;
-  padding: 3px 7px;
-}
-.mcp-tag-picker {
-  position: relative;
-}
-.mcp-tag-popover {
-  position: absolute;
-  left: 0;
-  top: calc(100% + 6px);
-  z-index: 10;
-  width: min(250px, 70vw);
-  padding: 7px;
-  background: var(--popover, var(--background));
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  box-shadow: 0 6px 20px #0002;
-}
-.mcp-tag-popover input {
-  width: 100%;
-  font-size: 12px;
-}
-.mcp-tag-options {
-  max-height: 210px;
-  overflow-y: auto;
-  margin-top: 5px;
-}
-.mcp-tag-options button {
-  justify-content: space-between;
-  width: 100%;
-  border: 0;
-  font-size: 12px;
-  text-align: left;
-}
-.mcp-tag-options button[aria-pressed="true"] {
-  background: var(--muted);
-}
-.mcp-tag-popover p {
-  font-size: 12px;
-  margin: 8px 4px;
-}
-.mcp-group-heading {
-  font-size: 12px;
-  font-weight: 500;
-  margin: 20px 8px 6px;
-}
-.mcp-group-heading span {
-  color: var(--muted-foreground);
-  margin-left: 6px;
-  font-size: 11px;
-}
 .mcp-message {
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 12px;
-  padding: 8px 0 4px 22px;
+  padding: 8px 0 4px 28px;
   color: var(--muted-foreground);
   font-size: 12px;
   cursor: default;
@@ -496,7 +373,7 @@
   .mcp-row-harness {
     grid-column: 1;
     grid-row: 2;
-    padding-left: 22px;
+    padding-left: 28px;
   }
   .mcp-status {
     grid-column: 2;
@@ -505,14 +382,8 @@
     font-size: 11px;
     max-width: 135px;
   }
-  .mcp-row-details {
-    padding-top: 8px;
-  }
   .mcp-search-field {
     max-width: none;
     flex-basis: 100%;
-  }
-  .mcp-group-toggle {
-    margin-left: auto;
   }
 }

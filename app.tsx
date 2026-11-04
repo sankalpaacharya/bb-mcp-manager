@@ -3,31 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { definePluginApp, useRpc } from "@get-bb/plugin-sdk/app";
 import type { rpcContract } from "./src/contract";
 import type { Snapshot } from "./src/status-cache";
-import type { Tags } from "./src/tags";
 import { InventoryView } from "./src/inventory-view";
 
 function InventoryPage() {
   const rpc = useRpc<typeof rpcContract>();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tags, setTags] = useState<Tags>({});
-  const ids =
-    snapshot?.inventory?.servers.map((server) => server.id).join(",") ?? "";
-  useEffect(() => {
-    let stopped = false;
-    void rpc
-      .call("tags")
-      .then((value) => {
-        if (!stopped) setTags(value);
-      })
-      .catch(() => {
-        if (!stopped)
-          setError("Could not load tags. Reopen the page to retry.");
-      });
-    return () => {
-      stopped = true;
-    };
-  }, [rpc, ids]);
   const request = useRef(0);
   const load = useCallback(
     async (refresh = false) => {
@@ -58,10 +39,6 @@ function InventoryPage() {
   }, [snapshot, load]);
   const actions = useMemo(
     () => ({
-      saveTags: async (serverId: string, values: string[]) => {
-        const saved = await rpc.call("setTags", { serverId, tags: values });
-        setTags((previous) => ({ ...previous, [serverId]: saved }));
-      },
       remove: async (serverId: string) => {
         await rpc.call("remove", { serverId });
         await load();
@@ -80,7 +57,6 @@ function InventoryPage() {
   return (
     <InventoryView
       actions={actions}
-      tags={tags}
       cachedChecks={snapshot?.checks}
       inventory={snapshot?.inventory ?? null}
       pending={(!snapshot && !error) || !!snapshot?.pending}

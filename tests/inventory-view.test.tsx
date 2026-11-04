@@ -62,14 +62,10 @@ test("plain list filters by harness and offers re-authentication", async () => {
   };
   let refreshed = 0;
   let removed = 0;
-  let savedTags: string[] = [];
   try {
     const view = render(
       <InventoryView
         actions={{
-          saveTags: async (_id, tags) => {
-            savedTags = tags;
-          },
           remove: async () => {
             removed++;
           },
@@ -107,34 +103,8 @@ test("plain list filters by harness and offers re-authentication", async () => {
     assert.ok(servers().getByText("No connections match these filters."));
     fireEvent.change(search, { target: { value: "" } });
     const row = within(servers().getByText("docs").closest("li")!);
-    assert.equal(row.getAllByRole("button").length, 3);
+    assert.equal(row.getAllByRole("button").length, 2);
     assert.ok(row.getByText("Not checked"));
-    assert.equal(
-      row.queryByRole("button", { name: "Edit tags for docs" }),
-      null,
-    );
-    fireEvent.click(row.getByRole("button", { name: "Details for docs" }));
-    assert.equal(
-      row
-        .getByRole("button", { name: "Details for docs" })
-        .getAttribute("aria-expanded"),
-      "true",
-    );
-    fireEvent.click(row.getByRole("button", { name: "Edit tags for docs" }));
-    fireEvent.change(
-      row.getByRole("textbox", { name: "Find or create a tag" }),
-      {
-        target: { value: "Work" },
-      },
-    );
-    fireEvent.keyDown(
-      row.getByRole("textbox", { name: "Find or create a tag" }),
-      { key: "Enter" },
-    );
-    await waitFor(() => assert.deepEqual(savedTags, ["work"]));
-    assert.equal(row.queryByRole("button", { name: "Save tags" }), null);
-    fireEvent.keyDown(row.getByRole("textbox"), { key: "Escape" });
-    assert.equal(row.queryByRole("textbox"), null);
     assert.equal(view.queryByRole("button", { name: "Check status" }), null);
     fireEvent.click(row.getByRole("button", { name: "Delete docs" }));
     assert.equal(removed, 0);
@@ -163,7 +133,7 @@ test("plain list filters by harness and offers re-authentication", async () => {
     );
     fireEvent.click(view.getByRole("button", { name: "Refresh" }));
     assert.equal(refreshed, 1);
-    const tagged = {
+    const merged = {
       ...data,
       servers: [
         ...data.servers,
@@ -172,11 +142,10 @@ test("plain list filters by harness and offers re-authentication", async () => {
     };
     view.rerender(
       <InventoryView
-        inventory={tagged}
+        inventory={merged}
         pending={false}
         error={null}
         onRefresh={() => {}}
-        tags={{ "1": ["work"], "3": ["work"], "2": ["personal"] }}
       />,
     );
     assert.equal(
@@ -185,15 +154,6 @@ test("plain list filters by harness and offers re-authentication", async () => {
       "same-name projects share a row",
     );
     assert.ok(view.getByRole("combobox", { name: "Configuration for docs" }));
-    fireEvent.click(view.getByRole("checkbox", { name: "Group by tag" }));
-    assert.ok(view.getByRole("heading", { name: "work 1" }));
-    const tagFilter = view.getByRole("combobox", { name: "Filter by tag" });
-    fireEvent.change(tagFilter, { target: { value: "tag:work" } });
-    assert.equal(servers().getAllByRole("listitem").length, 1);
-    fireEvent.change(tagFilter, { target: { value: "all" } });
-    assert.equal(servers().getAllByRole("listitem").length, 2);
-    fireEvent.change(tagFilter, { target: { value: "untagged" } });
-    assert.ok(servers().getByText("No connections match these filters."));
     view.rerender(
       <InventoryView
         inventory={data}

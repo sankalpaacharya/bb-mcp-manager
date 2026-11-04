@@ -1,6 +1,5 @@
 import { defineRpcContract } from "@get-bb/plugin-sdk";
 import { z } from "zod";
-import { tagListSchema } from "./tags";
 const harness = z.enum([
   "Claude Code",
   "Codex",
@@ -89,11 +88,6 @@ const snapshot = z.object({
   error: z.string().nullable(),
 });
 export const rpcContract = defineRpcContract({
-  tags: { input: z.null(), output: z.record(z.string(), tagListSchema) },
-  setTags: {
-    input: target.extend({ tags: tagListSchema }),
-    output: tagListSchema,
-  },
   remove: { input: target, output: z.null() },
   snapshot: { input: z.null(), output: snapshot },
   refresh: { input: z.null(), output: snapshot },

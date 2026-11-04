@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/showcase.png" width="1000" alt="MCP Manager showing harness filters, search, tags, and connection status" />
+  <img src="assets/showcase.png" width="1000" alt="MCP Manager showing harness filters, search, and connection status" />
 </p>
 
 Claude Code, Codex, Gemini CLI, OpenCode, Cursor, and Pi each keep their own MCP configuration. MCP Manager brings those connections into one list so you can find them, organize them, and reconnect when needed.
@@ -28,9 +28,7 @@ Then open **MCP inventory** in the sidebar. Requires BB 0.43+ and an enrolled ho
 ## What you get
 
 - See configured MCPs across six harnesses
-- Filter by harness, or search by name and tag
-- Expand a row to edit tags with the pencil icon
-- Group connections by tag
+- Filter by harness, or search by name
 - Reconnect through the harness, using the host’s browser where supported
 - Remove a connection with confirmation and a config backup
 

@@ -27,6 +27,5 @@ Commands, URLs, headers, and credentials are not included in inventory output. S
 
 Pi loads project configuration only in trusted projects. An untrusted project's `.pi/mcp.json` is still listed and scanned, but `pi` does not report or connect those servers until the project is trusted. Pi override entries, which only set `enabled`, `exposure`, or `toolExposure` for a user-level server, appear as configurations on the merged row.
 
-Tags are stored in BB, separately from harness configuration. A tag change on a combined row applies to all its existing configurations.
 
 See [icon sources](../assets/ICON-SOURCES.md) for logo attribution.

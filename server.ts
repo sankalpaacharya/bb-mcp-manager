@@ -1,7 +1,5 @@
 import { cliCommand, defineCli, type BbPluginApi } from "@get-bb/plugin-sdk";
 import { hostContract, rpcContract } from "./src/contract";
-
-import { tagListSchema } from "./src/tags";
 import { StatusCache } from "./src/status-cache";
 
 export default function plugin(bb: BbPluginApi) {
@@ -84,42 +82,11 @@ export default function plugin(bb: BbPluginApi) {
   }
   // Start outside the page lifecycle; reads of the cache never launch checks.
   refreshCache();
-  const tagKey = (hostId: string, serverId: string) =>
-    `tags:${JSON.stringify([hostId, serverId])}`;
   bb.rpc.register(rpcContract, {
-    tags: async () => {
-      const { hostId } = await target();
-      const entries = cache.snapshot().inventory?.servers ?? [];
-      return Object.fromEntries(
-        await Promise.all(
-          entries.map(async (server) => {
-            const parsed = tagListSchema.safeParse(
-              await bb.storage.kv.get(tagKey(hostId, server.id)),
-            );
-            return [server.id, parsed.success ? parsed.data : []];
-          }),
-        ),
-      );
-    },
-    setTags: async ({ serverId, tags }) => {
-      const selected = await target();
-      if (
-        cacheKey !== JSON.stringify(selected) ||
-        !cache
-          .snapshot()
-          .inventory?.servers.some((server) => server.id === serverId)
-      )
-        throw new Error("Refresh the inventory before tagging.");
-      const key = tagKey(selected.hostId, serverId);
-      if (tags.length) await bb.storage.kv.set(key, tags);
-      else await bb.storage.kv.delete(key);
-      return tags;
-    },
     remove: async ({ serverId }) => {
       const { hostId, projects } = await target();
       await host.call("remove", { serverId, projects }, { hostId });
       cache.remove(serverId);
-      await bb.storage.kv.delete(tagKey(hostId, serverId));
       return null;
     },
     snapshot: () => cache.snapshot(),

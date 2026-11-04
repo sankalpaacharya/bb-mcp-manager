@@ -17,4 +17,4 @@ Status refresh runs one native list command per harness/project context, sharing
 
 The row trash action removes only the selected source declaration after confirmation, with a private backup beside the file. It does not revoke OAuth tokens. Codex TOML is reserialized; JSONC edits preserve surrounding comments. Claude scans respect CLAUDE_CONFIG_DIR. Reconnect uses the host system browser; Linux provides a TTY through util-linux script.
 
-The UI combines identical names within a harness and counts those rows. Select a configuration for scoped reconnect/delete; grouping does not imply matching endpoints. Tags are edited with the row tag icon and saved in plugin storage for all existing configurations in that combined row. Tag filters and Group by tag organize the display without changing harness configuration.
+The UI combines identical names within a harness and counts those rows. Select a configuration for scoped reconnect/delete; grouping does not imply matching endpoints.

@@ -31,3 +31,11 @@ export interface Inventory {
   sources: Source[];
   truncated: boolean;
 }
+export function mergeConnections(servers: Server[]): Server[][] {
+  const groups = new Map<string, Server[]>();
+  for (const server of servers) {
+    const key = JSON.stringify([server.harness, server.name]);
+    groups.set(key, [...(groups.get(key) ?? []), server]);
+  }
+  return [...groups.values()];
+}
