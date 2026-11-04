@@ -98,6 +98,16 @@ test("only authorization links without credentials are returned", () => {
   ])
     assert.equal(authorizationUrl(unsafe), null);
 });
+test("reads the link from Claude's terminal hyperlink output", () => {
+  const url =
+    "https://example.com/authorize?response_type=code&client_id=sample&resource=https%3A%2F%2Fmcp.example.com%2F";
+  assert.equal(
+    authorizationUrl(
+      `If the browser didn't open, visit:\r\n  \x1b]8;;${url}\x07${url}\x1b]8;;\x07\r\n`,
+    ),
+    url,
+  );
+});
 test("unsupported flows give guidance without starting a process", () => {
   const jobs = new AuthJobs();
   try {

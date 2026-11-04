@@ -68,6 +68,10 @@ function InventoryPage() {
       },
       authenticate: (serverId: string) =>
         rpc.call("authenticate", { serverId }),
+      check: async (serverId: string) => {
+        await rpc.call("check", { serverId });
+        await load();
+      },
       poll: (taskId: string) => rpc.call("poll", { taskId }),
       cancel: (taskId: string) => rpc.call("cancel", { taskId }),
     }),

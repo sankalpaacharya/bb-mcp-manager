@@ -11,6 +11,7 @@ export interface Actions {
   saveTags?: (id: string, tags: string[]) => Promise<void>;
   remove?: (id: string) => Promise<void>;
   authenticate: (id: string) => Promise<ActionResult>;
+  check?: (id: string) => Promise<void>;
   poll: (id: string) => Promise<ActionResult>;
   cancel: (id: string) => Promise<ActionResult>;
 }
@@ -52,6 +53,8 @@ function ServerRow({
         if (!stopped) {
           setAuth(next);
           if (next.state === "waiting") timer = setTimeout(poll, 2000);
+          else if (next.state === "complete")
+            void actions.check?.(server.id).catch(() => {});
         }
       } catch {
         if (!stopped) {
@@ -65,7 +68,7 @@ function ServerRow({
       stopped = true;
       clearTimeout(timer);
     };
-  }, [actions?.poll, auth?.taskId, auth?.state]);
+  }, [actions?.poll, actions?.check, server.id, auth?.taskId, auth?.state]);
   const run = async () => {
     if (!actions) return;
     setBusy(true);
@@ -270,7 +273,7 @@ function ServerRow({
           {error ?? auth?.message}
           {auth?.command && auth.state === "manual" && (
             <code>{auth.command}</code>
-          )}
+          )}{" "}
         </div>
       )}
     </li>

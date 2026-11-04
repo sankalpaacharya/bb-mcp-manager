@@ -174,7 +174,9 @@ export async function checkServer(
   return (await checkServers([server], signal))[server.id];
 }
 export function authorizationUrl(output: string): string | null {
-  for (const match of output.matchAll(/https:\/\/[^\s<>"\x1b]+/g)) {
+  // Control characters end a URL: Claude prints OSC 8 hyperlinks
+  // (ESC]8;;URL BEL URL ESC]8;;BEL), so BEL separates two copies of the link.
+  for (const match of output.matchAll(/https:\/\/[^\s<>"\x00-\x1f\x7f]+/g)) {
     try {
       const url = new URL(match[0]);
       if (
@@ -242,17 +244,24 @@ export class AuthJobs {
       if (this.jobs.size >= 20 && job.value.state !== "waiting")
         this.jobs.delete(id);
     const id = randomUUID();
-    // Claude's OAuth fallback requires a TTY even when a browser is launched.
-    // util-linux script supplies one while preserving bounded output and cancellation.
-    const terminal = process.platform === "linux";
+    // Claude Code refuses to sign in unless stdin is a TTY, even when a browser
+    // is launched. script supplies one while preserving bounded output and
+    // cancellation; util-linux and BSD (macOS) script take different arguments.
+    const terminal =
+      server.harness === "Claude Code" &&
+      (process.platform === "linux" || process.platform === "darwin");
     const child = spawn(
       terminal ? "script" : binaries[server.harness],
-      terminal
-        ? ["--quiet", "--return", "--command", command, "/dev/null"]
-        : args,
+      !terminal
+        ? args
+        : process.platform === "linux"
+          ? ["--quiet", "--return", "--command", command, "/dev/null"]
+          : ["-q", "/dev/null", binaries[server.harness], ...args],
       {
         cwd: server.project ?? homedir(),
-        stdio: ["pipe", "pipe", "pipe"],
+        // BSD script fails on a pipe stdin (tcgetattr on a socket); nothing is
+        // ever written to the child, so /dev/null is enough.
+        stdio: ["ignore", "pipe", "pipe"],
         detached: process.platform !== "win32",
         // Native OAuth owns the localhost callback. Override inherited IDE browser
         // launchers so the harness opens the host desktop's default browser.
