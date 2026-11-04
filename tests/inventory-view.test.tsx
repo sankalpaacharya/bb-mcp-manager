@@ -105,7 +105,7 @@ test("plain list filters by harness and offers re-authentication", async () => {
     const row = within(servers().getByText("docs").closest("li")!);
     assert.equal(row.getAllByRole("button").length, 2);
     assert.ok(row.getByText("Not checked"));
-    assert.equal(view.queryByRole("button", { name: "Check status" }), null);
+    assert.ok(!view.queryByRole("button", { name: "Check status" }));
     fireEvent.click(row.getByRole("button", { name: "Delete docs" }));
     assert.equal(removed, 0);
     fireEvent.click(row.getByRole("button", { name: "Cancel" }));
@@ -114,14 +114,11 @@ test("plain list filters by harness and offers re-authentication", async () => {
     fireEvent.click(row.getByRole("button", { name: "Delete connection" }));
     await waitFor(() => assert.equal(removed, 1));
     await waitFor(() =>
-      assert.equal(
-        row.queryByRole("button", { name: "Delete connection" }),
-        null,
-      ),
+      assert.ok(!row.queryByRole("button", { name: "Delete connection" })),
     );
     fireEvent.click(row.getByRole("button", { name: "Reconnect" }));
     await waitFor(() => assert.ok(row.getByText("Sample sign-in ready")));
-    assert.equal(view.queryByRole("link", { name: /Open sign-in/ }), null);
+    assert.ok(!view.queryByRole("link", { name: /Open sign-in/ }));
     fireEvent.click(view.getByRole("button", { name: /^Codex/ }));
     assert.equal(servers().getAllByRole("listitem").length, 1);
     fireEvent.click(view.getByRole("button", { name: /^All / }));
