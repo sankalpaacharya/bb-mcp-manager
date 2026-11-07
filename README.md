@@ -34,7 +34,7 @@ Then open **MCP inventory** in the sidebar. Requires BB 0.43+ and an enrolled ho
 
 Same-name connections share a row within each harness. Pick a configuration before reconnecting or deleting when there’s more than one.
 
-Checks run at startup and on **Refresh**. Claude Code and Pi report connection status; Codex reports saved credentials. Other harnesses need native status checks. [Configuration and status details](docs/configuration.md).
+Checks run at startup and on **Refresh**. Claude Code and Pi report connection status. Codex connections are verified with an MCP handshake. Other harnesses need native status checks. [Configuration and status details](docs/configuration.md).
 
 ## CLI
 

@@ -2,6 +2,7 @@ import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import type { Server } from "./model";
+import { mapLimit, probeCodex, type CodexRow } from "./probe";
 
 export interface ActionResult {
   state:
@@ -137,7 +138,10 @@ export async function checkServers(
     first.harness === "Claude Code"
       ? ["mcp", "list"]
       : ["mcp", "list", "--json"];
-  return new Promise((resolve) =>
+  const { error, stdout } = await new Promise<{
+    error: Error | null;
+    stdout: string;
+  }>((resolve) =>
     execFile(
       binaries[first.harness],
       args,
@@ -145,27 +149,58 @@ export async function checkServers(
         cwd: first.project ?? homedir(),
         signal,
         timeout: 20000,
-        maxBuffer: 262144,
+        maxBuffer: first.harness === "Codex" ? 4194304 : 262144,
         env: { ...process.env, NO_COLOR: "1" },
       },
-      (error, stdout) =>
-        resolve(
-          Object.fromEntries(
-            servers.map((server) => [
-              server.id,
-              // Pi exits non-zero when an enabled server is not connected but
-              // still reports every server on stdout.
-              error && !(first.harness === "Pi" && stdout.trim())
-                ? result(
-                    "unknown",
-                    "Status check failed. Check that the harness CLI is available.",
-                  )
-                : parseListStatus(server, stdout),
-            ]),
-          ),
-        ),
+      (error, stdout) => resolve({ error, stdout }),
     ),
   );
+  // Pi exits non-zero when an enabled server is not connected but still
+  // reports every server on stdout.
+  if (error && !(first.harness === "Pi" && stdout.trim()))
+    return Object.fromEntries(
+      servers.map((server) => [
+        server.id,
+        result(
+          "unknown",
+          "Status check failed. Check that the harness CLI is available.",
+        ),
+      ]),
+    );
+  const statuses = Object.fromEntries(
+    servers.map((server) => [server.id, parseListStatus(server, stdout)]),
+  );
+  if (first.harness === "Codex")
+    await verifyCodex(servers, stdout, statuses, signal);
+  return statuses;
+}
+// Codex only reports OAuth state, so verify each server with an MCP
+// initialize handshake using the launch settings Codex resolved.
+async function verifyCodex(
+  servers: Server[],
+  stdout: string,
+  statuses: Record<string, ActionResult>,
+  signal?: AbortSignal,
+) {
+  let rows: CodexRow[];
+  try {
+    const parsed: unknown = JSON.parse(stdout);
+    rows = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return;
+  }
+  const pending = servers.filter(
+    (server) =>
+      statuses[server.id].state === "unknown" ||
+      (statuses[server.id].state === "credentials" &&
+        rows.find((row) => row?.name === server.name)?.auth_status ===
+          "bearer_token"),
+  );
+  await mapLimit(pending, 4, async (server) => {
+    const row = rows.find((row) => row?.name === server.name);
+    const probe = row && probeCodex(row, server.project, signal);
+    if (probe) statuses[server.id] = await probe;
+  });
 }
 export async function checkServer(
   server: Server,
