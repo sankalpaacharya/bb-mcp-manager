@@ -9,6 +9,18 @@ import {
 } from "jsonc-parser/lib/esm/main.js";
 import type { Server } from "./model";
 
+// Mirrors the reader: OpenCode 2 keeps servers in `mcp.servers`.
+function openCodePath(root: Record<string, unknown>): string[] {
+  const mcp = root.mcp;
+  const nested =
+    mcp !== null && typeof mcp === "object" && !Array.isArray(mcp)
+      ? (mcp as Record<string, unknown>)
+      : null;
+  return nested && Object.hasOwn(nested, "servers")
+    ? ["mcp", "servers"]
+    : ["mcp"];
+}
+
 export function withoutServer(text: string, server: Server): string {
   if (server.name.length >= 160)
     throw new Error("Server name is too long to remove safely.");
@@ -20,17 +32,17 @@ export function withoutServer(text: string, server: Server): string {
   if (errors.length || !root || typeof root !== "object")
     throw new Error("Invalid configuration");
   const key = toml
-    ? "mcp_servers"
+    ? ["mcp_servers"]
     : server.harness === "OpenCode"
-      ? "mcp"
-      : "mcpServers";
+      ? openCodePath(root as Record<string, unknown>)
+      : ["mcpServers"];
   const nested =
     server.harness === "Claude Code" &&
     server.project &&
     !server.source.endsWith("/.mcp.json");
   const path = nested
-    ? ["projects", server.project!, key, server.name]
-    : [key, server.name];
+    ? ["projects", server.project!, ...key, server.name]
+    : [...key, server.name];
   let container = root;
   for (const part of path.slice(0, -1)) {
     if (

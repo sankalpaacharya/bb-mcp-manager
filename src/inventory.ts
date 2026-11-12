@@ -59,6 +59,15 @@ export function configSources(
   return sources;
 }
 
+// OpenCode 2 stores servers in `mcp.servers`; earlier configurations place
+// them directly in `mcp`. Both layouts are accepted.
+export function openCodeEntries(container: RecordValue): unknown {
+  const mcp = container.mcp;
+  if (mcp === undefined) return undefined;
+  const nested = record(mcp);
+  return nested && nested.servers !== undefined ? nested.servers : mcp;
+}
+
 // Project files may contain secrets in any field. Only this explicit allowlist
 // crosses the host boundary; commands, URLs, arguments and credentials never do.
 export function extractServers(value: unknown, source: Source): Server[] {
@@ -66,14 +75,19 @@ export function extractServers(value: unknown, source: Source): Server[] {
   if (!root) throw new Error("invalid");
   const result: Server[] = [];
   function collect(container: RecordValue, project: string | null) {
-    const key =
-      source.harness === "Codex"
-        ? "mcp_servers"
-        : source.harness === "OpenCode"
-          ? "mcp"
-          : "mcpServers";
+    if (source.harness === "OpenCode") {
+      const entries = openCodeEntries(container);
+      if (entries === undefined) return;
+      const servers = record(entries);
+      if (!servers) throw new Error("invalid");
+      collectEntries(servers, project);
+      return;
+    }
+    const key = source.harness === "Codex" ? "mcp_servers" : "mcpServers";
     if (container[key] === undefined) return;
-    const entries = record(container[key]);
+    collectEntries(record(container[key]), project);
+  }
+  function collectEntries(entries: RecordValue | null, project: string | null) {
     if (!entries) throw new Error("invalid");
     for (const [name, raw] of Object.entries(entries)) {
       const entry = record(raw);

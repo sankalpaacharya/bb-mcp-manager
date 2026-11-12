@@ -59,6 +59,35 @@ test("removes a Codex table while preserving other settings and servers", () => 
     other: { command: "other" },
   });
 });
+test("removes an OpenCode server from the current mcp.servers layout and the legacy one", () => {
+  const current =
+    '// keep comment\n{"mcp":{"servers":{"docs":{"type":"local","command":["node"]}},"timeout":{"startup":10000}}}\n';
+  const removedCurrent = withoutServer(current, {
+    ...server,
+    harness: "OpenCode",
+    source: "/home/test/.config/opencode/opencode.jsonc",
+    project: null,
+    scope: "user",
+  });
+  assert.ok(removedCurrent.includes("// keep comment"));
+  const currentRoot = JSON.parse(removedCurrent.replace(/^\/\/[^\n]*\n/, ""));
+  assert.deepEqual(currentRoot.mcp.servers, {});
+  assert.deepEqual(currentRoot.mcp.timeout, { startup: 10000 });
+
+  const legacy =
+    '{"mcp":{"docs":{"type":"local","command":["node"]},"keep":{"type":"local","command":["node"]}}}';
+  const removedLegacy = JSON.parse(
+    withoutServer(legacy, {
+      ...server,
+      harness: "OpenCode",
+      source: "/home/test/.config/opencode/opencode.json",
+      project: null,
+      scope: "user",
+    }),
+  );
+  assert.deepEqual(Object.keys(removedLegacy.mcp), ["keep"]);
+});
+
 test("creates an exact private backup and refuses symlink configurations", async () => {
   const directory = await mkdtemp(join(tmpdir(), "mcp-remove-"));
   try {

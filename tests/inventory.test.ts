@@ -62,7 +62,7 @@ test("reads six harness formats and excludes launch details and credentials", as
     );
     await put(
       ".config/opencode/opencode.jsonc",
-      '{// comment\n"mcp":{"open":{"type":"local","command":["node","SECRET_SCRIPT"],},},}',
+      '{// comment\n"mcp":{"servers":{"open":{"type":"local","command":["node","SECRET_SCRIPT"],},},},}',
     );
     await put(
       ".pi/agent/mcp.json",
@@ -185,7 +185,7 @@ test("honors Codex and OpenCode directory overrides", async () =>
     await put("custom/config.toml", '[mcp_servers.override]\ncommand = "node"');
     await put(
       "xdg/opencode/opencode.json",
-      '{"mcp":{"xdg":{"command":["node"]}}}',
+      '{"mcp":{"servers":{"xdg":{"type":"local","command":["node"]}}}}',
     );
     const result = await scanInventory({
       home,
@@ -208,3 +208,39 @@ test("rejects relative project paths and observes cancellation", async () => {
     name: "AbortError",
   });
 });
+
+test("reads both OpenCode layouts and never lists the servers container as a server", async () =>
+  fixture(async (home, put) => {
+    await put(
+      ".config/opencode/opencode.jsonc",
+      JSON.stringify({
+        mcp: {
+          servers: {
+            local: { type: "local", command: ["node", "a.js"] },
+            remote: { type: "remote", url: "https://example.com/mcp" },
+            off: { type: "local", command: ["node"], disabled: true },
+          },
+        },
+      }),
+    );
+    await put(
+      "project/opencode.json",
+      JSON.stringify({ mcp: { legacy: { type: "local", command: ["node"] } } }),
+    );
+    const result = await scanInventory({
+      home,
+      env: {},
+      projects: [join(home, "project")],
+    });
+    assert.deepEqual(
+      result.servers.map((s) => [s.name, s.scope, s.transport, s.state]),
+      [
+        ["local", "user", "stdio", "configured"],
+        ["remote", "user", "http", "configured"],
+        ["off", "user", "stdio", "disabled"],
+        ["legacy", "project", "stdio", "configured"],
+      ],
+    );
+    assert.ok(result.servers.every((s) => s.harness === "OpenCode"));
+    assert.doesNotMatch(JSON.stringify(result), /example\.com/);
+  }));

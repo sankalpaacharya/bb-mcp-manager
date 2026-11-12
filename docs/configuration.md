@@ -21,6 +21,8 @@ Reconnect support depends on the harness and server. The harness CLI must be on 
 
 The plugin respects `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `XDG_CONFIG_HOME`, and an absolute `OPENCODE_CONFIG` path from the BB host worker’s environment.
 
+OpenCode 2 stores servers under `mcp.servers`; earlier configurations place them directly under `mcp`. Both layouts are read, and removal edits whichever one the file uses.
+
 Only these files and explicitly listed project folders are scanned. Plugin-bundled servers, cloud connectors, managed settings, and runtime overrides are not included. Scans are limited to 20 project folders, 1 MiB per file, and 250 entries.
 
 Commands, URLs, headers, and credentials are not included in inventory output. Status checks and sign-in run the native harness CLI, which may launch MCP processes or save credentials. Deleting a connection does not revoke credentials; for Pi, `pi mcp logout <server>` deletes stored OAuth tokens. JSON edits preserve comments; editing Codex TOML may change formatting and remove comments.
